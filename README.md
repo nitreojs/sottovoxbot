@@ -4,6 +4,8 @@ a telegram bot that allows you to send a private message to a certain user and n
 
 you will need a redis instance running.
 
+powered by [puregram](https://puregram.cool).
+
 ## installing
 
 ##### yarn
