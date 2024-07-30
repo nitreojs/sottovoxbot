@@ -1,15 +1,57 @@
-# bot-template
+# sottovoxbot
 
-## installing deps
+a telegram bot that allows you to send a private message to a certain user and no one except them will be able to read it.
+
+you will need a redis instance running.
+
+## installing
+
+##### yarn
 
 ```sh
-yarn add -D typescript ts-node tsc-alias tsconfig-paths eslint eslint-config-standard eslint-plugin-import eslint-plugin-n eslint-plugin-perfectionist eslint-plugin-promise @types/node @typescript-eslint/parser @typescript-eslint/eslint-plugin
+yarn
 ```
 
-## removing `git remote`
+##### npm
 
 ```sh
-git remote remove origin
+npm install
 ```
 
-don't forget to rename `.env.example` to `.env`!
+## running
+
+##### yarn
+
+```sh
+yarn dev
+```
+
+##### npm
+
+```sh
+npm run dev
+```
+
+## building
+
+##### yarn
+
+```sh
+yarn build
+```
+
+##### npm
+
+```sh
+npm run build
+```
+
+---
+
+<div align="center">
+
+it's that simple!
+
+<b>made by [starkow](https://starkow.dev)</b>
+
+</div>

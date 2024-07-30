@@ -1,12 +1,13 @@
 {
-  "name": "bot-template",
-  "version": "0.1.0",
-  "main": "dist/bot",
+  "name": "sottovoxbot",
+  "version": "1.0.0",
+  "main": "dist/bot.js",
   "scripts": {
     "dev": "ts-node -r tsconfig-paths/register src/bot",
     "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json"
   },
   "devDependencies": {
+    "@types/common-tags": "^1.8.4",
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
@@ -23,8 +24,10 @@
   },
   "dependencies": {
     "@starkow/logger": "^2.3.1",
+    "common-tags": "^1.8.2",
     "dotenv": "^16.3.1",
     "env-var": "^7.4.1",
-    "puregram": "^2.20.0"
+    "ioredis": "^5.4.1",
+    "puregram": "^2.26.2"
   }
 }
