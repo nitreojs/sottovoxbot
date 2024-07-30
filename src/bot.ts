@@ -5,6 +5,7 @@ import { InlineKeyboard, InlineQueryResult, InputMessageContent, Telegram } from
 
 import { Env } from './env'
 import { redis } from './shared'
+import { RedisMessage } from './types'
 
 const telegram = Telegram.fromToken(Env.TOKEN)
 
@@ -36,9 +37,9 @@ telegram.updates.on('callback_query', async (context) => {
     return context.answer()
   }
 
-  const { message, username, senderId } = JSON.parse(result)
+  const { message, username, senderId } = JSON.parse(result) as RedisMessage
 
-  if (context.senderId !== senderId && context.from.username !== username) {
+  if (context.senderId !== senderId && context.from.username?.toLowerCase() !== username.toLowerCase()) {
     return context.answer({
       show_alert: true,
       text: '🔒 sorry, but this whisper is not for you. you can not read it.'
