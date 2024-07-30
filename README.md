@@ -18,6 +18,8 @@ yarn
 npm install
 ```
 
+rename `.env.example` to `.env` and fill in the required environment variables.
+
 ## running
 
 ##### yarn
