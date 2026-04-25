@@ -88,7 +88,7 @@ telegram.updates.on('inline_query', async (context) => {
 
   const recipientUserId = userId ? Number(userId) : undefined
   const recipientLabel = username ? `@${username}` : `user ${recipientUserId}`
-  const recipientMention = username ? `@${username}` : `<a href="tg://user?id=${recipientUserId}">user</a>`
+  const recipientMention = username ? `@${username}` : `<a href="tg://user?id=${recipientUserId}">user</a> id=${recipientUserId}`
 
   const resultId = randomBytes(16).toString('hex')
 
