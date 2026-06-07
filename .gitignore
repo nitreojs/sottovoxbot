@@ -131,3 +131,6 @@ dist
 
 .env
 yarn.lock
+
+# working/intermediate docs
+.docs
