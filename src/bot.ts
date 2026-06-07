@@ -9,12 +9,12 @@ import { RedisMessage } from './types.js'
 
 const telegram = Telegram.fromToken(Env.TOKEN)
 
-telegram.onMessage((message) => {
-  if (message.chat.type !== 'private') {
+telegram.onMessage((update) => {
+  if (update.chat.type !== 'private') {
     return
   }
 
-  return message.send(
+  return update.send(
     stripIndent`
       hi! i'm @sottovoxbot. with me you can send a private message in the <b>chat</b> (also called "whispering") to a certain user and no one except them will be able to read it.
 
@@ -26,50 +26,50 @@ telegram.onMessage((message) => {
   )
 })
 
-telegram.onCallbackQuery(async (callbackQuery) => {
-  if (!callbackQuery.hasData()) {
+telegram.onCallbackQuery(async (update) => {
+  if (!update.hasData()) {
     return
   }
 
-  const result = await redis.get(`whisper:${callbackQuery.data}`)
+  const result = await redis.get(`whisper:${update.data}`)
 
   if (!result) {
-    return callbackQuery.answer()
+    return update.answer()
   }
 
   const { message, username, userId, senderId } = JSON.parse(result) as RedisMessage
 
   const isRecipient =
-    callbackQuery.from.id === senderId ||
-    (userId !== undefined && callbackQuery.from.id === userId) ||
-    (username !== undefined && callbackQuery.from.username?.toLowerCase() === username.toLowerCase())
+    update.from.id === senderId ||
+    (userId !== undefined && update.from.id === userId) ||
+    (username !== undefined && update.from.username?.toLowerCase() === username.toLowerCase())
 
   if (!isRecipient) {
-    return callbackQuery.answer({
+    return update.answer({
       show_alert: true,
       text: '🔒 sorry, but this whisper is not for you. you can not read it.'
     })
   }
 
-  return callbackQuery.answer({
+  return update.answer({
     show_alert: true,
     text: message
   })
 })
 
-telegram.onInlineQuery(async (inlineQuery) => {
+telegram.onInlineQuery(async (update) => {
   const button = InlineQueryResult.button('how to whisper?', {
     startParameter: 'how'
   })
 
-  if (!inlineQuery.query) {
-    return inlineQuery.answer({ results: [], button, cache_time: 0, is_personal: true })
+  if (!update.query) {
+    return update.answer({ results: [], button, cache_time: 0, is_personal: true })
   }
 
-  const match = inlineQuery.query.match(/(?<message>.+)\s+(?:@(?<username>\w+)|(?<userId>\d+))$/)
+  const match = update.query.match(/(?<message>.+)\s+(?:@(?<username>\w+)|(?<userId>\d+))$/)
 
   if (!match) {
-    return inlineQuery.answer({
+    return update.answer({
       results: [
         InlineQueryResult.article({
           id: randomBytes(16).toString('hex'),
@@ -99,14 +99,14 @@ telegram.onInlineQuery(async (inlineQuery) => {
 
   const payload: RedisMessage = {
     message,
-    senderId: inlineQuery.from.id,
+    senderId: update.from.id,
     username,
     userId: recipientUserId
   }
 
   await redis.set(`whisper:${resultId}`, JSON.stringify(payload), 'EX', 10_800 /* 3 hours */)
 
-  return inlineQuery.answer({
+  return update.answer({
     results: [
       InlineQueryResult.article({
         id: resultId,
