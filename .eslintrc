@@ -12,6 +12,11 @@
     "@typescript-eslint",
     "perfectionist"
   ],
+  "settings": {
+    "import/resolver": {
+      "typescript": true
+    }
+  },
   "rules": {
     "@typescript-eslint/no-empty-interface": "off",
     "@typescript-eslint/no-empty-function": "off",
