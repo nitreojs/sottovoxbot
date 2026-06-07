@@ -3,18 +3,18 @@ import { stripIndent } from 'common-tags'
 import { randomBytes } from 'crypto'
 import { InlineKeyboard, InlineQueryResult, InputMessageContent, Telegram } from 'puregram'
 
-import { Env } from './env'
-import { redis } from './shared'
-import { RedisMessage } from './types'
+import { Env } from './env.js'
+import { redis } from './shared/index.js'
+import { RedisMessage } from './types.js'
 
 const telegram = Telegram.fromToken(Env.TOKEN)
 
-telegram.updates.on('message', (context) => {
-  if (!context.isPM()) {
+telegram.onMessage((message) => {
+  if (message.chat.type !== 'private') {
     return
   }
 
-  return context.send(
+  return message.send(
     stripIndent`
       hi! i'm @sottovoxbot. with me you can send a private message in the <b>chat</b> (also called "whispering") to a certain user and no one except them will be able to read it.
 
@@ -26,65 +26,70 @@ telegram.updates.on('message', (context) => {
   )
 })
 
-telegram.updates.on('callback_query', async (context) => {
-  if (!context.hasQueryPayload()) {
+telegram.onCallbackQuery(async (callbackQuery) => {
+  if (!callbackQuery.hasData()) {
     return
   }
 
-  const result = await redis.get(`whisper:${context.queryPayload}`)
+  const result = await redis.get(`whisper:${callbackQuery.data}`)
 
   if (!result) {
-    return context.answer()
+    return callbackQuery.answer()
   }
 
   const { message, username, userId, senderId } = JSON.parse(result) as RedisMessage
 
   const isRecipient =
-    context.senderId === senderId ||
-    (userId !== undefined && context.senderId === userId) ||
-    (username !== undefined && context.from.username?.toLowerCase() === username.toLowerCase())
+    callbackQuery.from.id === senderId ||
+    (userId !== undefined && callbackQuery.from.id === userId) ||
+    (username !== undefined && callbackQuery.from.username?.toLowerCase() === username.toLowerCase())
 
   if (!isRecipient) {
-    return context.answer({
+    return callbackQuery.answer({
       show_alert: true,
       text: '🔒 sorry, but this whisper is not for you. you can not read it.'
     })
   }
 
-  return context.answer({
+  return callbackQuery.answer({
     show_alert: true,
     text: message
   })
 })
 
-telegram.updates.on('inline_query', async (context) => {
+telegram.onInlineQuery(async (inlineQuery) => {
   const button = InlineQueryResult.button('how to whisper?', {
-    start_parameter: 'how'
+    startParameter: 'how'
   })
 
-  if (!context.query) {
-    return context.answer([], { button, cache_time: 0, is_personal: true })
+  if (!inlineQuery.query) {
+    return inlineQuery.answer({ results: [], button, cache_time: 0, is_personal: true })
   }
 
-  const match = context.query.match(/(?<message>.+)\s+(?:@(?<username>\w+)|(?<userId>\d+))$/)
+  const match = inlineQuery.query.match(/(?<message>.+)\s+(?:@(?<username>\w+)|(?<userId>\d+))$/)
 
   if (!match) {
-    return context.answer([
-      InlineQueryResult.article({
-        id: randomBytes(16).toString('hex'),
-        title: 'whisper',
-        description: stripIndent`
-          message format should be like this:
-          @sottovoxbot message @username (or user id)
-        `,
-        input_message_content: InputMessageContent.text('message format should be like this: <code>@sottovoxbot message @username</code> or <code>@sottovoxbot message 123456789</code>', {
-          parse_mode: 'html'
+    return inlineQuery.answer({
+      results: [
+        InlineQueryResult.article({
+          id: randomBytes(16).toString('hex'),
+          title: 'whisper',
+          description: stripIndent`
+            message format should be like this:
+            @sottovoxbot message @username (or user id)
+          `,
+          content: InputMessageContent.text('message format should be like this: <code>@sottovoxbot message @username</code> or <code>@sottovoxbot message 123456789</code>', {
+            parseMode: 'html'
+          })
         })
-      })
-    ], { button, cache_time: 0, is_personal: true })
+      ],
+      button,
+      cache_time: 0,
+      is_personal: true
+    })
   }
 
-  const { message, username, userId } = match!.groups!
+  const { message, username, userId } = match.groups!
 
   const recipientUserId = userId ? Number(userId) : undefined
   const recipientLabel = username ? `@${username}` : `user ${recipientUserId}`
@@ -94,33 +99,38 @@ telegram.updates.on('inline_query', async (context) => {
 
   const payload: RedisMessage = {
     message,
-    senderId: context.senderId,
+    senderId: inlineQuery.from.id,
     username,
     userId: recipientUserId
   }
 
   await redis.set(`whisper:${resultId}`, JSON.stringify(payload), 'EX', 10_800 /* 3 hours */)
 
-  return context.answer([
-    InlineQueryResult.article({
-      id: resultId,
-      title: `🔒 whisper to ${recipientLabel}`,
-      description: 'only they can open it.',
-      input_message_content: InputMessageContent.text(`🔒 a whisper message to ${recipientMention}`, {
-        parse_mode: 'html'
-      }),
-      reply_markup: InlineKeyboard.keyboard([
-        InlineKeyboard.textButton({
-          text: 'show message 🔐',
-          payload: resultId
-        })
-      ])
-    })
-  ], { button, cache_time: 0, is_personal: true })
+  return inlineQuery.answer({
+    results: [
+      InlineQueryResult.article({
+        id: resultId,
+        title: `🔒 whisper to ${recipientLabel}`,
+        description: 'only they can open it.',
+        content: InputMessageContent.text(`🔒 a whisper message to ${recipientMention}`, {
+          parseMode: 'html'
+        }),
+        replyMarkup: InlineKeyboard.keyboard([
+          InlineKeyboard.textButton({
+            text: 'show message 🔐',
+            payload: resultId
+          })
+        ])
+      })
+    ],
+    button,
+    cache_time: 0,
+    is_personal: true
+  })
 })
 
 const main = async () => {
-  await telegram.updates.startPolling()
+  await telegram.startPolling()
 
   Logger.create(`@${telegram.bot.username}`)('started')
 }
