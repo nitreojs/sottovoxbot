@@ -248,10 +248,18 @@
   resolved "https://registry.yarnpkg.com/@nolyfill/is-core-module/-/is-core-module-1.0.39.tgz#3dc35ba0f1e66b403c00b39344f870298ebb1c8e"
   integrity sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==
 
-"@puregram/api@~10.0.3":
+"@puregram/api@~10.0.1", "@puregram/api@~10.0.3":
   version "10.0.3"
   resolved "https://registry.yarnpkg.com/@puregram/api/-/api-10.0.3.tgz#a703ac8d0c959b12825f5111da61280b20b44be8"
   integrity sha512-QHbNHV6q/zFZ34DAV9xXYlv5uzcRhbxyDZlaUT+Er78lVnWl5aPxdkgDY3G7QtHlAA0mkn/huGdZkcehy2+ruA==
+
+"@puregram/markup@^3.0.0":
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/@puregram/markup/-/markup-3.0.0.tgz#b4d0503bb1893c9ae0d8738d398c8815cb3e68f8"
+  integrity sha512-cTVBoGPVq+Yfm2MJeOgOOxdCIIAWCtHGS1WEQetzCjZbGtEG4Xa3g3eaWDTL3TUvyt4f71LvsIXp8gQX5/m8TA==
+  dependencies:
+    "@puregram/api" "~10.0.1"
+    puregram "^3.0.0"
 
 "@starkow/logger@^2.3.1":
   version "2.3.1"
@@ -264,11 +272,6 @@
   integrity sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==
   dependencies:
     tslib "^2.4.0"
-
-"@types/common-tags@^1.8.4":
-  version "1.8.4"
-  resolved "https://registry.yarnpkg.com/@types/common-tags/-/common-tags-1.8.4.tgz#3b31fcb5952cd326a55cabe9dbe6c5be3c1671a0"
-  integrity sha512-S+1hLDJPjWNDhcGxsxEbepzaxWqURP/o+3cP4aa2w7yBXgdcmKGQtZzP8JbyfOd0m+33nh+8+kvxYE2UJtBDkg==
 
 "@types/json-schema@^7.0.12":
   version "7.0.14"
@@ -725,11 +728,6 @@ color-name@~1.1.4:
   version "1.1.4"
   resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.4.tgz#c2a09a87acbde69543de6f63fa3995c826c536a2"
   integrity sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==
-
-common-tags@^1.8.2:
-  version "1.8.2"
-  resolved "https://registry.yarnpkg.com/common-tags/-/common-tags-1.8.2.tgz#94ebb3c076d26032745fd54face7f688ef5ac9c6"
-  integrity sha512-gk/Z852D2Wtb//0I+kRFNKKE9dIIVirjoqPoA1wJU+XePVXZfGeBpk45+A1rKO4Q43prqWBNY/MiIeRLbPWUaA==
 
 concat-map@0.0.1:
   version "0.0.1"
@@ -1829,7 +1827,7 @@ punycode@^2.1.0:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.3.1.tgz#027422e2faec0b25e1549c3e1bd8309b9133b6e5"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
-puregram@^3.1.0:
+puregram@^3.0.0, puregram@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/puregram/-/puregram-3.1.0.tgz#cf40d7aff1deabf4ae33b3f511465baa0e97a9de"
   integrity sha512-f6nd+Pm36UpY6aWcPlqoWd45JCcxy/gRdVAw6fiJM/27miFObrgCp5zse4337m4ieurUmp3RL4Z/RlyIg11ZLQ==

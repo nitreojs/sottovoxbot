@@ -12,7 +12,6 @@
     "start": "node dist/bot.js"
   },
   "devDependencies": {
-    "@types/common-tags": "^1.8.4",
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
@@ -27,8 +26,8 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "@puregram/markup": "^3.0.0",
     "@starkow/logger": "^2.3.1",
-    "common-tags": "^1.8.2",
     "dotenv": "^16.3.1",
     "env-var": "^7.4.1",
     "ioredis": "^5.4.1",
