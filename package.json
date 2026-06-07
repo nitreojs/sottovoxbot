@@ -1,14 +1,19 @@
 {
   "name": "sottovoxbot",
   "version": "1.0.0",
+  "type": "module",
   "main": "dist/bot.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "dev": "ts-node -r tsconfig-paths/register src/bot",
-    "build": "tsc -p tsconfig.json && tsc-alias -p tsconfig.json"
+    "dev": "tsx watch src/bot.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/bot.js"
   },
   "devDependencies": {
     "@types/common-tags": "^1.8.4",
-    "@types/node": "^20.8.10",
+    "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
     "eslint": "^8.53.0",
@@ -17,9 +22,7 @@
     "eslint-plugin-n": "^16.2.0",
     "eslint-plugin-perfectionist": "^2.3.0",
     "eslint-plugin-promise": "^6.1.1",
-    "ts-node": "^10.9.1",
-    "tsc-alias": "^1.8.8",
-    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.2.2"
   },
   "dependencies": {
@@ -28,6 +31,6 @@
     "dotenv": "^16.3.1",
     "env-var": "^7.4.1",
     "ioredis": "^5.4.1",
-    "puregram": "^2.26.2"
+    "puregram": "^3.1.0"
   }
 }
