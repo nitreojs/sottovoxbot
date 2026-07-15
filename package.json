@@ -26,11 +26,15 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@puregram/markup": "^3.0.0",
+    "@puregram/markup": "^3.0.1",
+    "@puregram/utils": "^3.2.0",
     "@starkow/logger": "^2.3.1",
     "dotenv": "^16.3.1",
     "env-var": "^7.4.1",
     "ioredis": "^5.4.1",
-    "puregram": "^3.1.0"
+    "puregram": "^3.7.0"
+  },
+  "resolutions": {
+    "@puregram/api": "~10.2.1"
   }
 }

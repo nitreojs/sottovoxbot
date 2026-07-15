@@ -248,18 +248,23 @@
   resolved "https://registry.yarnpkg.com/@nolyfill/is-core-module/-/is-core-module-1.0.39.tgz#3dc35ba0f1e66b403c00b39344f870298ebb1c8e"
   integrity sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==
 
-"@puregram/api@~10.0.1", "@puregram/api@~10.0.3":
-  version "10.0.3"
-  resolved "https://registry.yarnpkg.com/@puregram/api/-/api-10.0.3.tgz#a703ac8d0c959b12825f5111da61280b20b44be8"
-  integrity sha512-QHbNHV6q/zFZ34DAV9xXYlv5uzcRhbxyDZlaUT+Er78lVnWl5aPxdkgDY3G7QtHlAA0mkn/huGdZkcehy2+ruA==
+"@puregram/api@~10.1.0", "@puregram/api@~10.2.1":
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/@puregram/api/-/api-10.2.1.tgz#29080306e0c8b805b941d8001ac18a66a3f983da"
+  integrity sha512-mg+BLn/Tyj074Wp4dyrY9YhSTmgTcjCOiyvLKZiDPLgypLusv2KF/orPPyy5hdjeLMSTqrmC2Kjr9xbyhdad2Q==
 
-"@puregram/markup@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@puregram/markup/-/markup-3.0.0.tgz#b4d0503bb1893c9ae0d8738d398c8815cb3e68f8"
-  integrity sha512-cTVBoGPVq+Yfm2MJeOgOOxdCIIAWCtHGS1WEQetzCjZbGtEG4Xa3g3eaWDTL3TUvyt4f71LvsIXp8gQX5/m8TA==
+"@puregram/markup@^3.0.1":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@puregram/markup/-/markup-3.0.1.tgz#506ca5e1a8cda3229c73d32740a249ea87912dd8"
+  integrity sha512-Jfra1Zq5Hd5qjjdcLzl7Ea94nW5KbtTScnpbrgJxi+3qJhb49LaXLlzDjtEY9tEySnPIrDnh1qt+NqU7ldWOhg==
   dependencies:
-    "@puregram/api" "~10.0.1"
-    puregram "^3.0.0"
+    "@puregram/api" "~10.1.0"
+    puregram "^3.3.0"
+
+"@puregram/utils@^3.2.0":
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/@puregram/utils/-/utils-3.2.0.tgz#3102f003d1ab43c77cee48fe043ff7368526345b"
+  integrity sha512-vRgC3P/sgH+DDGGpagKl0F87P4BhWY3N7814dzbUEYzXJkzp9go2ppwyWUK8/3ApJiz3wPpO9BBDxod2RU8NYA==
 
 "@starkow/logger@^2.3.1":
   version "2.3.1"
@@ -1827,12 +1832,12 @@ punycode@^2.1.0:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.3.1.tgz#027422e2faec0b25e1549c3e1bd8309b9133b6e5"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
-puregram@^3.0.0, puregram@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/puregram/-/puregram-3.1.0.tgz#cf40d7aff1deabf4ae33b3f511465baa0e97a9de"
-  integrity sha512-f6nd+Pm36UpY6aWcPlqoWd45JCcxy/gRdVAw6fiJM/27miFObrgCp5zse4337m4ieurUmp3RL4Z/RlyIg11ZLQ==
+puregram@^3.3.0, puregram@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/puregram/-/puregram-3.7.0.tgz#e585dcfb22e62c29d2d7cc6bc709b33c06080857"
+  integrity sha512-Ycs69L+vzIRpHFHl2eqzdyuxh6dSn8n/iME8d9FzGnHb9je/PYQVNyjvtRr8N9u8hGOWYQr5d1nPEgP0aGOQtg==
   dependencies:
-    "@puregram/api" "~10.0.3"
+    "@puregram/api" "~10.2.1"
     form-data-encoder "^4.0.2"
     formdata-node "^6.0.3"
 
