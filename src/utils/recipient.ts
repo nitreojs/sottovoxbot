@@ -22,9 +22,6 @@ const COMMAND_ONLY = /^\/(?:w|whisper)(?:@\w+)?$/i
 export const labelOf = (user?: Pick<User, 'firstName' | 'username'>): string =>
   user?.username === undefined ? (user?.firstName ?? 'someone') : `@${user.username}`
 
-// a name picked from the composer arrives as a text_mention entity carrying the whole user object.
-// it is the only identifier telegram hands over directly, and the only way to name someone who has
-// no @username at all — so it outranks both the reply target and whatever token was typed
 const mentionedIn = (update: MessageUpdate): undefined | { recipient: Recipient, text: string } => {
   const content = update.text ?? update.caption
   const entity = (update.entities ?? update.captionEntities)?.find(candidate => candidate.type === 'text_mention')
@@ -80,7 +77,6 @@ export const parseWhisper = async (update: MessageUpdate, rest: string | undefin
 
   const target = await targetOf(split.groups.token, { senderId: update.senderId, senderUsername: update.from?.username })
 
-  // /w delivers straight away, so a recipient the bot can't put a number to is no recipient at all
   if (target?.userId === undefined) {
     return { error: UNKNOWN, ok: false }
   }

@@ -17,8 +17,6 @@ const agoLabel = (readAt: number): string => {
   return seconds < 3600 ? `${Math.floor(seconds / 60)}m ago` : `${Math.floor(seconds / 3600)}h ago`
 }
 
-// the author's own press is the only surface an inline whisper has for its sender: telegram never
-// tells them anything else about it, and the message can't be deleted once posted
 const authorPanel = (record: RedisMessage): string => {
   const status = record.readAt === undefined ? '◌ not read yet' : `✓ read ${agoLabel(record.readAt)}`
   const hint = `press again within ${TTL.recall}s to recall it`
@@ -47,8 +45,6 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
 
   const isAuthor = update.from.id === senderId
 
-  // the pinned id wins outright when there is one; a username match is the weaker fallback for a
-  // recipient the bot had never seen at compose time
   const isRecipient = userId === undefined
     ? username !== undefined && update.from.username?.toLowerCase() === username.toLowerCase()
     : update.from.id === userId
@@ -60,8 +56,6 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
     })
   }
 
-  // a press proves the whisper was sent, so it earns the full lifetime even if telegram never
-  // delivered the chosen_inline_result that normally promotes it
   await WhisperService.promoteMaterial(material)
 
   if (isAuthor && !isRecipient) {
@@ -85,7 +79,6 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
   // burning only after a delivered alert: doing it first would destroy a whisper telegram refused to show
   if (once) {
     if (await WhisperService.burnInline(material)) {
-      // inline messages can't be deleted, so the burnt whisper is tombstoned in place
       return update.edit(html`🔥 a one-time whisper to ${targetMention(record)} — read and burnt.`).catch(() => {})
     }
 

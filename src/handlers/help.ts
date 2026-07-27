@@ -4,7 +4,7 @@ import { html } from '@puregram/markup'
 import { deepLink } from '@puregram/utils'
 import { InlineKeyboard } from 'puregram'
 
-import { EPHEMERAL_REPLY_WINDOW_SECONDS, INVITE_ADMIN_RIGHTS, TTL } from '../constants.js'
+import { EPHEMERAL_REPLY_WINDOW_SECONDS, ICON, INVITE_ADMIN_RIGHTS, TTL } from '../constants.js'
 import { telegram } from '../shared/index.js'
 
 export const handleHelp = (update: MessageUpdate) =>
@@ -25,7 +25,8 @@ export const handleHelp = (update: MessageUpdate) =>
   `, {
     reply_markup: InlineKeyboard.keyboard([
       InlineKeyboard.urlButton({
-        text: '➕ add me to a group',
+        iconCustomEmojiId: ICON.group,
+        text: 'add me to a group',
         url: deepLink.startGroup({ admin: INVITE_ADMIN_RIGHTS, bot: telegram.bot.username! })
       })
     ])

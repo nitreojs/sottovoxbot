@@ -12,13 +12,9 @@ export const KEY = {
 }
 
 export const TTL = {
-  // a safety net only: my_chat_member keeps this fresh, so a stale entry means a missed update
   capability: 86_400,
-  // typing an inline query writes a record per keystroke and only one of them is ever sent, so a
-  // draft lives briefly and is promoted to the full lifetime once chosen_inline_result says it left
   draft: 900,
   inlineWhisper: 10_800,
-  // long enough to carry a back-and-forth, short enough not to suggest someone from last week
   lastTarget: 86_400,
   recall: 5,
   relay: 60,
@@ -28,8 +24,14 @@ export const TTL = {
 // telegram only allows replying to an ephemeral message within this window
 export const EPHEMERAL_REPLY_WINDOW_SECONDS = 15
 
-// a whisper is revealed through answerCallbackQuery, whose text telegram caps here
 export const ALERT_TEXT_LIMIT = 200
+
+// icons render only on messages the bot sends itself — inline-query keyboards need a fragment username
+export const ICON = {
+  group: '5942877472163892475',
+  pencil: '5879841310902324730',
+  personAdd: '5814550759961793482'
+}
 
 export const WHISPER_TRIGGER = /^\/(?:w|whisper)(?:@(?<mention>\w+))?(?:\s+(?<rest>[\s\S]+))?$/i
 

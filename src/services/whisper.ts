@@ -54,11 +54,9 @@ export class WhisperService {
 
     const payload = unseal<RedisMessage>(material, stored.record.sealed)
 
-    // read state lives outside the envelope so marking a whisper read never touches its ciphertext
     return payload === undefined ? undefined : { ...payload, readAt: stored.record.readAt }
   }
 
-  // the last person this sender whispered, so a query that names nobody still has a candidate
   static async lastTarget (senderId: number): Promise<Target | undefined> {
     const raw = await redis.get(KEY.lastTarget(senderId))
 
@@ -77,8 +75,6 @@ export class WhisperService {
     await redis.set(KEY.inlineWhisper(stored.lookup), JSON.stringify(stored.record), 'KEEPTTL')
   }
 
-  // a draft only earns the full lifetime once it has actually been sent; expire never shortens,
-  // so calling this on an already-promoted record is harmless
   static async promote (lookup: string) {
     await redis.expire(KEY.inlineWhisper(lookup), TTL.inlineWhisper)
   }
@@ -112,8 +108,6 @@ export class WhisperService {
       return record === undefined ? { kind: 'none' } : { kind: 'record', record }
     }
 
-    // without the reply's own ephemeral id, only a single open whisper identifies itself; picking
-    // between several by recency would hand a private reply to someone who was never part of it
     const candidates = await redis.smembers(KEY.relayCandidates(chatId, replierId))
     const records = await Promise.all(candidates.map(candidate => WhisperService.relayOf(chatId, Number(candidate))))
     const live = records.filter(record => record !== undefined)
@@ -125,8 +119,6 @@ export class WhisperService {
     return live.length === 0 ? { kind: 'none' } : { kind: 'ambiguous' }
   }
 
-  // the material is the only copy of the key and goes into the button; the lookup is safe to hand
-  // telegram as the result id, which is how chosen_inline_result later tells us this one was sent
   static async saveInline (payload: RedisMessage): Promise<{ lookup: string, material: string }> {
     const { lookup, material, sealed } = seal(payload)
 

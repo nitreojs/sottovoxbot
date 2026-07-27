@@ -2,7 +2,7 @@ import type { Formattable, InlineQueryUpdate } from 'puregram'
 
 import { html } from '@puregram/markup'
 import { randomBytes } from 'crypto'
-import { InlineKeyboard, InlineQueryResult, InputMessageContent } from 'puregram'
+import { ButtonStyle, InlineKeyboard, InlineQueryResult, InputMessageContent } from 'puregram'
 
 import { ALERT_TEXT_LIMIT } from '../constants.js'
 import { UserService, WhisperService } from '../services/index.js'
@@ -45,8 +45,6 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
 
   const parsed = await parseTargetedQuery(update.query, context)
 
-  // naming nobody is not a mistake once you've whispered before: the message is the whole query
-  // and the recipient is whoever you last picked, spelled out in the title before you tap it
   const target = parsed?.target ?? await WhisperService.lastTarget(context.senderId)
 
   if (target === undefined) {
@@ -83,8 +81,6 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
     senderId: update.from.id
   }
 
-  // the material is the decryption key and exists only in the button from here on; the lookup
-  // doubles as the result id so chosen_inline_result can promote whichever of the two was sent
   const [regular, once] = await Promise.all([
     WhisperService.saveInline(payload),
     WhisperService.saveInline({ ...payload, once: true }),
@@ -115,6 +111,7 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
         replyMarkup: InlineKeyboard.keyboard([
           InlineKeyboard.textButton({
             payload: once.material,
+            style: ButtonStyle.Danger,
             text: 'read once 🔥'
           })
         ]),

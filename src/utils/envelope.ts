@@ -12,8 +12,6 @@ export interface SealedWhisper {
   sealed: string
 }
 
-// the button carries the only copy of the material, and redis holds nothing derivable from it
-// alone — every derivation goes through the bot's secret, so neither half decrypts by itself
 const derive = (material: Buffer, label: string) =>
   createHmac('sha256', Env.WHISPER_SECRET).update(label).update(material).digest()
 
@@ -36,7 +34,6 @@ export const seal = (payload: unknown): SealedWhisper => {
   }
 }
 
-// a wrong key, a truncated button payload and a tampered row are all the same answer: nothing
 export const unseal = <T>(material: string, sealed: string): T | undefined => {
   const parsed = Buffer.from(material, 'base64url')
 

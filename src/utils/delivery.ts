@@ -10,8 +10,6 @@ const HINTS: Array<[RegExp, string]> = [
   [/not supported|unsupported/i, 'this chat does not support private whispers.']
 ]
 
-// telegram's descriptions are not a stable api, so an unmatched one is logged for the operator
-// to map later rather than guessed at in front of the user
 export const deliveryHint = (description: string): string => {
   const hint = HINTS.find(([pattern]) => pattern.test(description))
 

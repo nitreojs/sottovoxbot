@@ -5,8 +5,16 @@ import { MediaSource } from 'puregram'
 import { telegram } from '../shared/index.js'
 import { EphemeralSend } from '../types.js'
 
-// animation must be checked before document — telegram sets both; video notes and stickers take no caption
+// live photos come before photos and animation before document — telegram sets both of each pair.
+// video notes and stickers take no caption
 const mediaSenderOf = (update: MessageUpdate, caption: Formattable | string): EphemeralSend | undefined => {
+  if (update.hasLivePhoto() && update.livePhoto.photo !== undefined) {
+    const livePhoto = MediaSource.fileId(update.livePhoto.fileId)
+    const photo = MediaSource.fileId(update.livePhoto.photo.biggest.fileId)
+
+    return (base) => telegram.api.sendLivePhoto({ ...base, caption, live_photo: livePhoto, photo, suppress: true })
+  }
+
   if (update.hasPhoto()) {
     const photo = MediaSource.fileId(update.photo.biggest.fileId)
 
@@ -59,8 +67,7 @@ const mediaSenderOf = (update: MessageUpdate, caption: Formattable | string): Ep
 }
 
 export const hasWhisperMedia = (update: MessageUpdate): boolean =>
-  update.hasPhoto() || update.hasAnimation() || update.hasVideo() || update.hasAudio() ||
-  update.hasVoice() || update.hasVideoNote() || update.hasSticker() || update.hasDocument()
+  mediaSenderOf(update, '') !== undefined
 
 export const whisperSenderOf = (update: MessageUpdate, content: Formattable | string): EphemeralSend =>
   mediaSenderOf(update, content) ?? ((base) => telegram.api.sendMessage({ ...base, suppress: true, text: content }))

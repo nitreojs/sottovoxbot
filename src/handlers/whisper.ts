@@ -36,8 +36,7 @@ export const handleWhisperCommand = async (update: MessageUpdate, rest?: string)
   const framed = html`🔒 <b>whisper from ${senderLabel}</b>${text ? `\n\n${text}` : ''}\n\n<i>reply within ${EPHEMERAL_REPLY_WINDOW_SECONDS}s to answer privately.</i>`
   const send = whisperSenderOf(update, framed)
 
-  // the whisper is already in memory, so the command is scrubbed before delivery rather than after:
-  // every round trip ordered ahead of the delete is another second the plaintext is readable by the chat
+  // scrubbed before delivery: every round trip ahead of the delete leaves the plaintext readable
   const scrubbed = update.isEphemeral() || await update.delete().then(() => true).catch(() => false)
 
   const delivered = await WhisperService.deliver(update.chat.id, recipient.id, send, { id: senderId, label: senderLabel })
@@ -45,7 +44,6 @@ export const handleWhisperCommand = async (update: MessageUpdate, rest?: string)
   if (!delivered.ok) {
     const hint = deliveryHint(delivered.description)
 
-    // the command is gone by now, so the text goes back to its author rather than being lost with it
     return notifySender(text ? html`${hint}\n\nhere it is back:\n<code>${text}</code>` : hint)
   }
 
