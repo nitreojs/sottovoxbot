@@ -2,7 +2,7 @@ import type { Formattable, MessageUpdate, User } from 'puregram'
 
 import { html } from '@puregram/markup'
 
-import { UserService } from '../services/index.js'
+import { targetLabel, targetOf } from './target.js'
 
 export interface Recipient {
   id: number
@@ -13,9 +13,9 @@ export type WhisperParse =
   | { error: Formattable, ok: false }
   | { ok: true, recipient: Recipient, text: string }
 
-const USAGE = html`usage: <code>/w &lt;reply | user id | @username&gt; your message</code>`
+const USAGE = html`usage: <code>/w &lt;reply | @username | id:123456789&gt; your message</code>`
 
-const UNKNOWN = html`couldn't find that user — reply to their message, use their numeric id, or an @username they've already used in this group.`
+const UNKNOWN = html`couldn't find that user — reply to their message, use <code>id:123456789</code>, or an @username they've already used in this group.`
 
 export const labelOf = (user?: Pick<User, 'firstName' | 'username'>): string =>
   user?.username === undefined ? (user?.firstName ?? 'someone') : `@${user.username}`
@@ -43,23 +43,18 @@ export const parseWhisper = async (update: MessageUpdate, rest: string | undefin
     return { error: USAGE, ok: false }
   }
 
-  const token = split.groups.token
   const text = split.groups.text ?? ''
 
   if (!allowEmpty && text.length === 0) {
     return { error: USAGE, ok: false }
   }
 
-  if (/^\d+$/.test(token)) {
-    return { ok: true, recipient: { id: Number(token), label: `user ${token}` }, text }
-  }
+  const target = await targetOf(split.groups.token)
 
-  const username = token.replace(/^@/, '')
-  const id = await UserService.resolve(username)
-
-  if (id === undefined) {
+  // /w delivers straight away, so a recipient the bot can't put a number to is no recipient at all
+  if (target?.userId === undefined) {
     return { error: UNKNOWN, ok: false }
   }
 
-  return { ok: true, recipient: { id, label: `@${username}` }, text }
+  return { ok: true, recipient: { id: target.userId, label: targetLabel(target) }, text }
 }

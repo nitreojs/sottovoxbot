@@ -19,6 +19,7 @@ services:
     environment:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       REDIS_URL: redis:6379
+      WHISPER_SECRET: ${WHISPER_SECRET}
 
 volumes:
   redis-data:

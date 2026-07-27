@@ -3,16 +3,18 @@ import type { Formattable, MessageUpdate } from 'puregram'
 import { html } from '@puregram/markup'
 
 import { EPHEMERAL_REPLY_WINDOW_SECONDS } from '../constants.js'
-import { WhisperService } from '../services/index.js'
+import { ChatService, WhisperService } from '../services/index.js'
 import { telegram } from '../shared/index.js'
-import { hasWhisperMedia, isBotAdmin, labelOf, parseWhisper, whisperSenderOf } from '../utils/index.js'
+import { deliveryHint, hasWhisperMedia, labelOf, parseWhisper, whisperSenderOf } from '../utils/index.js'
 
 export const handleWhisperCommand = async (update: MessageUpdate, rest?: string) => {
   if (update.chat.type === 'private') {
     return update.send('whispering works in groups where i\'m an admin. add me to one first!')
   }
 
-  if (!(await isBotAdmin(update.chat.id))) {
+  const capability = await ChatService.capability(update.chat.id)
+
+  if (!capability.admin) {
     return update.reply('make me an admin here so i can deliver whispers privately.')
   }
 
@@ -31,16 +33,23 @@ export const handleWhisperCommand = async (update: MessageUpdate, rest?: string)
   const senderLabel = labelOf(update.from)
 
   const framed = html`🔒 <b>whisper from ${senderLabel}</b>${text ? `\n\n${text}` : ''}\n\n<i>reply within ${EPHEMERAL_REPLY_WINDOW_SECONDS}s to answer privately.</i>`
+  const send = whisperSenderOf(update, framed)
 
-  const delivered = await WhisperService.deliver(update.chat.id, recipient.id, whisperSenderOf(update, framed), { id: senderId, label: senderLabel })
+  // the whisper is already in memory, so the command is scrubbed before delivery rather than after:
+  // every round trip ordered ahead of the delete is another second the plaintext is readable by the chat
+  const scrubbed = update.isEphemeral() || await update.delete().then(() => true).catch(() => false)
 
-  // if the client didn't send the command ephemerally, scrub it so the secret isn't left in the open
-  if (!update.isEphemeral()) {
-    await update.delete().catch(() => {})
+  const delivered = await WhisperService.deliver(update.chat.id, recipient.id, send, { id: senderId, label: senderLabel })
+
+  if (!delivered.ok) {
+    const hint = deliveryHint(delivered.description)
+
+    // the command is gone by now, so the text goes back to its author rather than being lost with it
+    return notifySender(text ? html`${hint}\n\nhere it is back:\n<code>${text}</code>` : hint)
   }
 
-  if (!delivered) {
-    return notifySender('couldn\'t deliver — the recipient may be offline or has never been active in a group with me.')
+  if (!scrubbed) {
+    return notifySender(html`✅ whispered to ${recipient.label}.\n\n⚠️ i could not delete your command, so everyone can still read it — give me the <b>delete messages</b> right.`)
   }
 
   return notifySender(html`✅ whispered to ${recipient.label}.`)

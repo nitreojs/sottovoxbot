@@ -1,6 +1,8 @@
 # sottovoxbot
 
-a telegram bot that allows you to send a private message to a certain user and no one except them will be able to read it.
+a telegram bot that allows you to send a private message to a certain user and no one except them will be able to read it. inline whispers can also be sent as one-time reads that burn once opened.
+
+whisper bodies are encrypted before they reach redis: the key is derived from `WHISPER_SECRET` and from key material that only ever lives in the message's button, so a redis dump on its own decrypts nothing.
 
 you will need a redis instance running.
 
