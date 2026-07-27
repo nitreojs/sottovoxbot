@@ -4,6 +4,7 @@ import type { TelegramBotCommand } from 'puregram'
 export const KEY = {
   capability: (chatId: number) => `cap:${chatId}`,
   inlineWhisper: (id: string) => `whisper:${id}`,
+  lastTarget: (senderId: number) => `wto:${senderId}`,
   pendingRecall: (id: string) => `recall:${id}`,
   relay: (chatId: number, ephemeralMessageId: number) => `weph:${chatId}:${ephemeralMessageId}`,
   relayCandidates: (chatId: number, recipientId: number) => `weph:open:${chatId}:${recipientId}`,
@@ -14,6 +15,8 @@ export const TTL = {
   // a safety net only: my_chat_member keeps this fresh, so a stale entry means a missed update
   capability: 86_400,
   inlineWhisper: 10_800,
+  // long enough to carry a back-and-forth, short enough not to suggest someone from last week
+  lastTarget: 86_400,
   recall: 5,
   relay: 60,
   username: 2_592_000

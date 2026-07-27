@@ -15,6 +15,8 @@ export const handleHelp = (update: MessageUpdate) =>
 
     <b>example</b>: <code>@sottovoxbot @starkow hello! how are you doing?</code> or <code>@sottovoxbot id:398859857 hello!</code>
 
+    <b>shortcuts</b> — once you've whispered someone, just type the message and i'll offer them again. <code>@me</code> whispers yourself, which makes a burn-after-read note in Saved Messages.
+
     <b>your own whispers</b> — tap one you sent to see whether it's been read yet, and tap it again within ${TTL.recall}s to recall it. mistyped the @username? that's how you take it back.
 
     <b>in groups</b> — add me as an <b>admin</b>, then whisper with a command: reply to someone (or name them with <code>@username</code> / <code>id:123456789</code>) and send <code>/w your secret message</code>. only they can read it, and they can reply within ${EPHEMERAL_REPLY_WINDOW_SECONDS}s to answer you back privately.

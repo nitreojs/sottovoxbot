@@ -33,18 +33,29 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
       ]
     })
 
+  const context = { senderId: update.from.id, senderUsername: update.from.username }
+
   if (!update.query) {
-    return update.answer({ button, cache_time: 0, is_personal: true, results: [] })
+    const recent = await WhisperService.lastTarget(context.senderId)
+
+    return recent === undefined
+      ? update.answer({ button, cache_time: 0, is_personal: true, results: [] })
+      : hint(`🔒 whisper to ${targetLabel(recent)}`, 'the last person you whispered — now type your message')
   }
 
-  const parsed = await parseTargetedQuery(update.query)
+  const parsed = await parseTargetedQuery(update.query, context)
 
-  if (parsed === undefined) {
+  // naming nobody is not a mistake once you've whispered before: the message is the whole query
+  // and the recipient is whoever you last picked, spelled out in the title before you tap it
+  const target = parsed?.target ?? await WhisperService.lastTarget(context.senderId)
+
+  if (target === undefined) {
     return hint('whisper', 'name the recipient first: @username or id:123456789')
   }
 
-  const { message, target } = parsed
-  const recipientLabel = targetLabel(target)
+  const sticky = parsed === undefined
+  const message = parsed?.message ?? update.query.trim()
+  const recipientLabel = `${targetLabel(target)}${sticky ? ' (last)' : ''}`
 
   if (!message) {
     return hint(`🔒 whisper to ${recipientLabel}`, 'now type your message')
@@ -62,7 +73,9 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
 
   const description = target.userId === undefined
     ? `i have not seen @${target.username} yet, so i will match them by their @username.`
-    : 'only they can open it.'
+    : sticky
+      ? 'the last person you whispered — name someone else to change that.'
+      : 'only they can open it.'
 
   const payload: RedisMessage = {
     ...target,
@@ -73,7 +86,8 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
   // the returned material is the decryption key; it exists only in the button from here on
   const [key, onceKey] = await Promise.all([
     WhisperService.saveInline(payload),
-    WhisperService.saveInline({ ...payload, once: true })
+    WhisperService.saveInline({ ...payload, once: true }),
+    WhisperService.rememberTarget(context.senderId, target)
   ])
 
   return update.answer({

@@ -19,6 +19,8 @@ export interface SealedRecord {
   sealed: string
 }
 
+export type Target = Pick<RedisMessage, 'userId' | 'username'>
+
 export interface WhisperRelay {
   authorId: number
   authorLabel: string

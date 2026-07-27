@@ -2,7 +2,7 @@ import { Telegram } from 'puregram'
 
 import { KEY, TTL } from '../constants.js'
 import { redis } from '../shared/index.js'
-import { DeliveryResult, EphemeralSend, RedisMessage, RelayResolution, SealedRecord, WhisperRelay } from '../types.js'
+import { DeliveryResult, EphemeralSend, RedisMessage, RelayResolution, SealedRecord, Target, WhisperRelay } from '../types.js'
 import { lookupOf, seal, unseal } from '../utils/envelope.js'
 
 interface WhisperAuthor {
@@ -58,6 +58,13 @@ export class WhisperService {
     return payload === undefined ? undefined : { ...payload, readAt: stored.record.readAt }
   }
 
+  // the last person this sender whispered, so a query that names nobody still has a candidate
+  static async lastTarget (senderId: number): Promise<Target | undefined> {
+    const raw = await redis.get(KEY.lastTarget(senderId))
+
+    return raw === null ? undefined : JSON.parse(raw) as Target
+  }
+
   static async markRead (material: string) {
     const stored = await WhisperService.sealedOf(material)
 
@@ -78,6 +85,10 @@ export class WhisperService {
       redis.sadd(candidates, String(ephemeralMessageId)),
       redis.expire(candidates, TTL.relay)
     ])
+  }
+
+  static async rememberTarget (senderId: number, target: Target) {
+    await redis.set(KEY.lastTarget(senderId), JSON.stringify(target), 'EX', TTL.lastTarget)
   }
 
   static async resolveReply (chatId: number, replierId: number, ephemeralMessageId?: number): Promise<RelayResolution> {

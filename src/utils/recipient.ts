@@ -78,7 +78,7 @@ export const parseWhisper = async (update: MessageUpdate, rest: string | undefin
     return { error: USAGE, ok: false }
   }
 
-  const target = await targetOf(split.groups.token)
+  const target = await targetOf(split.groups.token, { senderId: update.senderId, senderUsername: update.from?.username })
 
   // /w delivers straight away, so a recipient the bot can't put a number to is no recipient at all
   if (target?.userId === undefined) {
