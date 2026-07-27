@@ -18,6 +18,8 @@ export const handleHelp = (update: MessageUpdate) =>
     <b>your own whispers</b> — tap one you sent to see whether it's been read yet, and tap it again within ${TTL.recall}s to recall it. mistyped the @username? that's how you take it back.
 
     <b>in groups</b> — add me as an <b>admin</b>, then whisper with a command: reply to someone (or name them with <code>@username</code> / <code>id:123456789</code>) and send <code>/w your secret message</code>. only they can read it, and they can reply within ${EPHEMERAL_REPLY_WINDOW_SECONDS}s to answer you back privately.
+
+    <b>no @username?</b> — tap their name from the composer's suggestions after <code>/w</code> and i'll pick up who they are. or send me <code>/w</code> right here and choose them from your contacts.
   `, {
     reply_markup: InlineKeyboard.keyboard([
       InlineKeyboard.urlButton({

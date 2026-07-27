@@ -6,10 +6,11 @@ import { EPHEMERAL_REPLY_WINDOW_SECONDS } from '../constants.js'
 import { ChatService, WhisperService } from '../services/index.js'
 import { telegram } from '../shared/index.js'
 import { deliveryHint, hasWhisperMedia, labelOf, parseWhisper, whisperSenderOf } from '../utils/index.js'
+import { handleRecipientRequest } from './picker.js'
 
 export const handleWhisperCommand = async (update: MessageUpdate, rest?: string) => {
   if (update.chat.type === 'private') {
-    return update.send('whispering works in groups where i\'m an admin. add me to one first!')
+    return handleRecipientRequest(update)
   }
 
   const capability = await ChatService.capability(update.chat.id)

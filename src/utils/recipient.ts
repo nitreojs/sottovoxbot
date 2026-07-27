@@ -17,10 +17,39 @@ const USAGE = html`usage: <code>/w &lt;reply | @username | id:123456789&gt; your
 
 const UNKNOWN = html`couldn't find that user — reply to their message, use <code>id:123456789</code>, or an @username they've already used in this group.`
 
+const COMMAND_ONLY = /^\/(?:w|whisper)(?:@\w+)?$/i
+
 export const labelOf = (user?: Pick<User, 'firstName' | 'username'>): string =>
   user?.username === undefined ? (user?.firstName ?? 'someone') : `@${user.username}`
 
+// a name picked from the composer arrives as a text_mention entity carrying the whole user object.
+// it is the only identifier telegram hands over directly, and the only way to name someone who has
+// no @username at all — so it outranks both the reply target and whatever token was typed
+const mentionedIn = (update: MessageUpdate): undefined | { recipient: Recipient, text: string } => {
+  const content = update.text ?? update.caption
+  const entity = (update.entities ?? update.captionEntities)?.find(candidate => candidate.type === 'text_mention')
+  const user = entity?.user
+
+  if (content === undefined || entity === undefined || user === undefined) {
+    return undefined
+  }
+
+  return COMMAND_ONLY.test(content.slice(0, entity.offset).trim())
+    ? { recipient: { id: user.id, label: labelOf(user) }, text: content.slice(entity.offset + entity.length).trim() }
+    : undefined
+}
+
 export const parseWhisper = async (update: MessageUpdate, rest: string | undefined, allowEmpty: boolean): Promise<WhisperParse> => {
+  const mentioned = mentionedIn(update)
+
+  if (mentioned !== undefined) {
+    if (!allowEmpty && mentioned.text.length === 0) {
+      return { error: html`mention the user and add some text: <code>/w @them your message</code>`, ok: false }
+    }
+
+    return { ok: true, ...mentioned }
+  }
+
   const replyTarget = update.replyToMessage?.from
 
   if (replyTarget !== undefined && !replyTarget.isBot) {
