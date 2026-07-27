@@ -77,6 +77,20 @@ export class WhisperService {
     await redis.set(KEY.inlineWhisper(stored.lookup), JSON.stringify(stored.record), 'KEEPTTL')
   }
 
+  // a draft only earns the full lifetime once it has actually been sent; expire never shortens,
+  // so calling this on an already-promoted record is harmless
+  static async promote (lookup: string) {
+    await redis.expire(KEY.inlineWhisper(lookup), TTL.inlineWhisper)
+  }
+
+  static async promoteMaterial (material: string) {
+    const lookup = lookupOf(material)
+
+    if (lookup !== undefined) {
+      await WhisperService.promote(lookup)
+    }
+  }
+
   static async remember (chatId: number, ephemeralMessageId: number, record: WhisperRelay) {
     const candidates = KEY.relayCandidates(chatId, record.recipientId)
 
@@ -111,13 +125,14 @@ export class WhisperService {
     return live.length === 0 ? { kind: 'none' } : { kind: 'ambiguous' }
   }
 
-  // returns the button material: the only copy of the key, handed straight to the inline result
-  static async saveInline (payload: RedisMessage): Promise<string> {
+  // the material is the only copy of the key and goes into the button; the lookup is safe to hand
+  // telegram as the result id, which is how chosen_inline_result later tells us this one was sent
+  static async saveInline (payload: RedisMessage): Promise<{ lookup: string, material: string }> {
     const { lookup, material, sealed } = seal(payload)
 
-    await redis.set(KEY.inlineWhisper(lookup), JSON.stringify({ sealed }), 'EX', TTL.inlineWhisper)
+    await redis.set(KEY.inlineWhisper(lookup), JSON.stringify({ sealed }), 'EX', TTL.draft)
 
-    return material
+    return { lookup, material }
   }
 
   private static async relayOf (chatId: number, ephemeralMessageId: number): Promise<undefined | WhisperRelay> {

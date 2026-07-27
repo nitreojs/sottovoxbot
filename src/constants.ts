@@ -14,6 +14,9 @@ export const KEY = {
 export const TTL = {
   // a safety net only: my_chat_member keeps this fresh, so a stale entry means a missed update
   capability: 86_400,
+  // typing an inline query writes a record per keystroke and only one of them is ever sent, so a
+  // draft lives briefly and is promoted to the full lifetime once chosen_inline_result says it left
+  draft: 900,
   inlineWhisper: 10_800,
   // long enough to carry a back-and-forth, short enough not to suggest someone from last week
   lastTarget: 86_400,

@@ -24,7 +24,7 @@ const main = async () => {
   }
 
   await telegram.startPolling({
-    allowedUpdates: ['callback_query', 'inline_query', 'message', 'my_chat_member']
+    allowedUpdates: ['callback_query', 'chosen_inline_result', 'inline_query', 'message', 'my_chat_member']
   })
 
   Logger.create(`@${telegram.bot.username}`)('started')

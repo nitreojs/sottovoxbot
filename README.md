@@ -24,6 +24,8 @@ npm install
 
 rename `.env.example` to `.env` and fill in the required environment variables.
 
+then turn on inline feedback in [@BotFather](https://t.me/BotFather): `/setinlinefeedback` → `Enabled (100%)`. typing an inline query writes a draft on every keystroke and only one of them ever gets sent, so drafts expire after 15 minutes and the `chosen_inline_result` update is what promotes the sent one to its full 3 hours. without it a whisper still survives if its recipient opens it inside those 15 minutes, and quietly expires early if they don't.
+
 ## running
 
 ##### yarn

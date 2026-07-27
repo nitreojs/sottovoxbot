@@ -83,8 +83,9 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
     senderId: update.from.id
   }
 
-  // the returned material is the decryption key; it exists only in the button from here on
-  const [key, onceKey] = await Promise.all([
+  // the material is the decryption key and exists only in the button from here on; the lookup
+  // doubles as the result id so chosen_inline_result can promote whichever of the two was sent
+  const [regular, once] = await Promise.all([
     WhisperService.saveInline(payload),
     WhisperService.saveInline({ ...payload, once: true }),
     WhisperService.rememberTarget(context.senderId, target)
@@ -98,10 +99,10 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
       InlineQueryResult.article({
         content: InputMessageContent.text(html`🔒 a whisper message to ${recipientMention}`),
         description,
-        id: randomBytes(16).toString('hex'),
+        id: regular.lookup,
         replyMarkup: InlineKeyboard.keyboard([
           InlineKeyboard.textButton({
-            payload: key,
+            payload: regular.material,
             text: 'show message 🔐'
           })
         ]),
@@ -110,10 +111,10 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
       InlineQueryResult.article({
         content: InputMessageContent.text(html`🔥 a one-time whisper to ${recipientMention}`),
         description: `${description} it burns once they read it.`,
-        id: randomBytes(16).toString('hex'),
+        id: once.lookup,
         replyMarkup: InlineKeyboard.keyboard([
           InlineKeyboard.textButton({
-            payload: onceKey,
+            payload: once.material,
             text: 'read once 🔥'
           })
         ]),

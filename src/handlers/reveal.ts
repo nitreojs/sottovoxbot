@@ -60,6 +60,10 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
     })
   }
 
+  // a press proves the whisper was sent, so it earns the full lifetime even if telegram never
+  // delivered the chosen_inline_result that normally promotes it
+  await WhisperService.promoteMaterial(material)
+
   if (isAuthor && !isRecipient) {
     if (await WhisperService.disarmRecall(material)) {
       await WhisperService.burnInline(material)
