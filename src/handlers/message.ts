@@ -1,8 +1,7 @@
 import type { MessageUpdate } from 'puregram'
 
 import { WHISPER_TRIGGER } from '../constants.js'
-import { UserService } from '../services/index.js'
-import { telegram } from '../shared/index.js'
+import { BotService, UserService } from '../services/index.js'
 import { handleHelp } from './help.js'
 import { handleRelay } from './relay.js'
 import { handleWhisperCommand } from './whisper.js'
@@ -22,7 +21,7 @@ export const handleMessage = async (update: MessageUpdate) => {
     if (match !== null) {
       const mention = match.groups?.mention
 
-      if (mention === undefined || mention.toLowerCase() === telegram.bot.username?.toLowerCase()) {
+      if (mention === undefined || BotService.owns(mention)) {
         return handleWhisperCommand(update, match.groups?.rest?.trim())
       }
     }

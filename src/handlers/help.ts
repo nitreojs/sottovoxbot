@@ -5,15 +5,15 @@ import { deepLink } from '@puregram/utils'
 import { InlineKeyboard } from 'puregram'
 
 import { EPHEMERAL_REPLY_WINDOW_SECONDS, ICON, INVITE_ADMIN_RIGHTS, TTL } from '../constants.js'
-import { telegram } from '../shared/index.js'
+import { BotService } from '../services/index.js'
 
 export const handleHelp = (update: MessageUpdate) =>
   update.send(html`
-    hi! i'm @sottovoxbot. with me you can send a private message in the <b>chat</b> (also called "whispering") to a certain user and no one except them will be able to read it.
+    hi! i'm ${BotService.describe()}. with me you can send a private message in the <b>chat</b> (also called "whispering") to a certain user and no one except them will be able to read it.
 
-    <b>inline</b> — in any chat, type @sottovoxbot then the recipient (<code>@username</code> or <code>id:123456789</code>) followed by your message, then pick one of the two results: a regular whisper, or a <b>🔥 one-time</b> one that burns the moment they read it.
+    <b>inline</b> — in any chat, type ${BotService.describe()} then the recipient (<code>@username</code> or <code>id:123456789</code>) followed by your message, then pick one of the two results: a regular whisper, or a <b>🔥 one-time</b> one that burns the moment they read it.
 
-    <b>example</b>: <code>@sottovoxbot @starkow hello! how are you doing?</code> or <code>@sottovoxbot id:398859857 hello!</code>
+    <b>example</b>: <code>@${BotService.primary} @starkow hello! how are you doing?</code> or <code>@${BotService.primary} id:398859857 hello!</code>
 
     <b>shortcuts</b> — once you've whispered someone, just type the message and i'll offer them again. <code>@me</code> whispers yourself, which makes a burn-after-read note in Saved Messages.
 
@@ -27,7 +27,7 @@ export const handleHelp = (update: MessageUpdate) =>
       InlineKeyboard.urlButton({
         iconCustomEmojiId: ICON.group,
         text: 'add me to a group',
-        url: deepLink.startGroup({ admin: INVITE_ADMIN_RIGHTS, bot: telegram.bot.username! })
+        url: deepLink.startGroup({ admin: INVITE_ADMIN_RIGHTS, bot: BotService.primary })
       })
     ])
   })

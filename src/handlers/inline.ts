@@ -5,11 +5,11 @@ import { randomBytes } from 'crypto'
 import { ButtonStyle, InlineKeyboard, InlineQueryResult, InputMessageContent } from 'puregram'
 
 import { ALERT_TEXT_LIMIT } from '../constants.js'
-import { UserService, WhisperService } from '../services/index.js'
+import { BotService, UserService, WhisperService } from '../services/index.js'
 import { RedisMessage } from '../types.js'
 import { parseTargetedQuery, targetLabel, targetMention } from '../utils/index.js'
 
-const FORMAT = html`message format should be like this: <code>@sottovoxbot @username message</code> or <code>@sottovoxbot id:123456789 message</code>`
+const format = () => html`message format should be like this: <code>@${BotService.primary} @username message</code> or <code>@${BotService.primary} id:123456789 message</code>`
 
 export const handleInlineQuery = async (update: InlineQueryUpdate) => {
   UserService.learn(update.from).catch(() => {})
@@ -18,7 +18,7 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
     startParameter: 'how'
   })
 
-  const hint = (title: string, description: string, content: Formattable = FORMAT) =>
+  const hint = (title: string, description: string, content: Formattable = format()) =>
     update.answer({
       button,
       cache_time: 0,

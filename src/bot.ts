@@ -3,6 +3,7 @@ import { BotCommands, Telegram } from 'puregram'
 
 import { GROUP_COMMANDS } from './constants.js'
 import { registerHandlers } from './handlers/index.js'
+import { BotService } from './services/index.js'
 import { telegram } from './shared/index.js'
 
 registerHandlers()
@@ -12,6 +13,9 @@ telegram.catch((error, context) => {
 })
 
 const main = async () => {
+  await telegram.start()
+  await BotService.load()
+
   // best-effort: /w is handled by the message router regardless, so a rejected payload must not block startup
   const commands = await telegram.api.setMyCommands({
     commands: GROUP_COMMANDS,
@@ -27,7 +31,7 @@ const main = async () => {
     allowedUpdates: ['callback_query', 'chosen_inline_result', 'inline_query', 'message', 'my_chat_member']
   })
 
-  Logger.create(`@${telegram.bot.username}`)('started')
+  Logger.create(BotService.all.map((username) => `@${username}`).join(' '))('started')
 }
 
 main().catch((error) => {
