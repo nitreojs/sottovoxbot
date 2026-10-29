@@ -21,6 +21,12 @@ export const lookupOf = (material: string): string | undefined => {
   return parsed.length === MATERIAL_BYTES ? derive(parsed, 'lookup').toString('hex') : undefined
 }
 
+export const readerTagOf = (material: string, userId: number): string | undefined => {
+  const parsed = Buffer.from(material, 'base64url')
+
+  return parsed.length === MATERIAL_BYTES ? derive(parsed, `reader:${userId}`).toString('base64url') : undefined
+}
+
 export const seal = (payload: unknown): SealedWhisper => {
   const material = randomBytes(MATERIAL_BYTES)
   const iv = randomBytes(IV_BYTES)

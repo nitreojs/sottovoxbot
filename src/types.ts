@@ -5,12 +5,21 @@ export interface ChatCapability {
   canDelete: boolean
 }
 
+export interface Target {
+  userId?: number
+  username?: string
+}
+
+export interface Audience {
+  kind: 'except' | 'only'
+  targets: Target[]
+}
+
 export interface RedisMessage {
+  audience: Audience
   message: string
   once?: boolean
   readAt?: number
-  username?: string
-  userId?: number
   senderId: number
 }
 
@@ -18,8 +27,6 @@ export interface SealedRecord {
   readAt?: number
   sealed: string
 }
-
-export type Target = Pick<RedisMessage, 'userId' | 'username'>
 
 export interface WhisperRelay {
   authorId: number

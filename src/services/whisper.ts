@@ -2,8 +2,8 @@ import { Telegram } from 'puregram'
 
 import { KEY, TTL } from '../constants.js'
 import { redis } from '../shared/index.js'
-import { DeliveryResult, EphemeralSend, RedisMessage, RelayResolution, SealedRecord, Target, WhisperRelay } from '../types.js'
-import { lookupOf, seal, unseal } from '../utils/envelope.js'
+import { Audience, DeliveryResult, EphemeralSend, RedisMessage, RelayResolution, SealedRecord, WhisperRelay } from '../types.js'
+import { lookupOf, readerTagOf, seal, unseal } from '../utils/envelope.js'
 
 interface WhisperAuthor {
   id: number
@@ -22,7 +22,16 @@ export class WhisperService {
   static async burnInline (material: string): Promise<boolean> {
     const lookup = lookupOf(material)
 
-    return lookup !== undefined && await redis.del(KEY.inlineWhisper(lookup)) === 1
+    if (lookup === undefined) {
+      return false
+    }
+
+    const [burnt] = await Promise.all([
+      redis.del(KEY.inlineWhisper(lookup)),
+      redis.del(KEY.inlineReaders(lookup))
+    ])
+
+    return burnt === 1
   }
 
   static async deliver (chatId: number, recipientId: number, send: EphemeralSend, author: WhisperAuthor): Promise<DeliveryResult> {
@@ -57,22 +66,37 @@ export class WhisperService {
     return payload === undefined ? undefined : { ...payload, readAt: stored.record.readAt }
   }
 
-  static async lastTarget (senderId: number): Promise<Target | undefined> {
-    const raw = await redis.get(KEY.lastTarget(senderId))
+  static async hasRead (material: string, readerId: number): Promise<boolean> {
+    const lookup = lookupOf(material)
+    const tag = readerTagOf(material, readerId)
 
-    return raw === null ? undefined : JSON.parse(raw) as Target
+    return lookup !== undefined && tag !== undefined && await redis.sismember(KEY.inlineReaders(lookup), tag) === 1
   }
 
-  static async markRead (material: string) {
-    const stored = await WhisperService.sealedOf(material)
+  static async lastAudience (senderId: number): Promise<Audience | undefined> {
+    const raw = await redis.get(KEY.lastAudience(senderId))
 
-    if (stored === undefined || stored.record.readAt !== undefined) {
-      return
+    return raw === null ? undefined : JSON.parse(raw) as Audience
+  }
+
+  static async markRead (material: string, readerId: number): Promise<number> {
+    const stored = await WhisperService.sealedOf(material)
+    const tag = readerTagOf(material, readerId)
+
+    if (stored === undefined || tag === undefined) {
+      return 0
     }
 
-    stored.record.readAt = Math.floor(Date.now() / 1000)
+    const readers = KEY.inlineReaders(stored.lookup)
+    const counted = await redis.multi().sadd(readers, tag).expire(readers, TTL.inlineWhisper).scard(readers).exec()
 
-    await redis.set(KEY.inlineWhisper(stored.lookup), JSON.stringify(stored.record), 'KEEPTTL')
+    if (stored.record.readAt === undefined) {
+      stored.record.readAt = Math.floor(Date.now() / 1000)
+
+      await redis.set(KEY.inlineWhisper(stored.lookup), JSON.stringify(stored.record), 'KEEPTTL')
+    }
+
+    return Number(counted?.[2]?.[1] ?? 0)
   }
 
   static async promote (lookup: string) {
@@ -87,6 +111,12 @@ export class WhisperService {
     }
   }
 
+  static async readerCount (material: string): Promise<number> {
+    const lookup = lookupOf(material)
+
+    return lookup === undefined ? 0 : redis.scard(KEY.inlineReaders(lookup))
+  }
+
   static async remember (chatId: number, ephemeralMessageId: number, record: WhisperRelay) {
     const candidates = KEY.relayCandidates(chatId, record.recipientId)
 
@@ -97,8 +127,8 @@ export class WhisperService {
     ])
   }
 
-  static async rememberTarget (senderId: number, target: Target) {
-    await redis.set(KEY.lastTarget(senderId), JSON.stringify(target), 'EX', TTL.lastTarget)
+  static async rememberAudience (senderId: number, audience: Audience) {
+    await redis.set(KEY.lastAudience(senderId), JSON.stringify(audience), 'EX', TTL.lastAudience)
   }
 
   static async resolveReply (chatId: number, replierId: number, ephemeralMessageId?: number): Promise<RelayResolution> {

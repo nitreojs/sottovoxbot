@@ -5,7 +5,7 @@ import { html } from '@puregram/markup'
 import { ALERT_TEXT_LIMIT, TTL } from '../constants.js'
 import { WhisperService } from '../services/index.js'
 import { RedisMessage } from '../types.js'
-import { targetMention } from '../utils/index.js'
+import { audienceMention, isTarget } from '../utils/index.js'
 
 const agoLabel = (readAt: number): string => {
   const seconds = Math.max(0, Math.floor(Date.now() / 1000) - readAt)
@@ -17,8 +17,17 @@ const agoLabel = (readAt: number): string => {
   return seconds < 3600 ? `${Math.floor(seconds / 60)}m ago` : `${Math.floor(seconds / 3600)}h ago`
 }
 
-const authorPanel = (record: RedisMessage): string => {
-  const status = record.readAt === undefined ? '◌ not read yet' : `✓ read ${agoLabel(record.readAt)}`
+const authorPanel = (record: RedisMessage, readers: number): string => {
+  const { audience, readAt } = record
+
+  const status = readAt === undefined
+    ? '◌ not read yet'
+    : audience.kind === 'except'
+      ? `✓ read by ${readers} · first ${agoLabel(readAt)}`
+      : audience.targets.length === 1
+        ? `✓ read ${agoLabel(readAt)}`
+        : `✓ ${readers}/${audience.targets.length} read · first ${agoLabel(readAt)}`
+
   const hint = `press again within ${TTL.recall}s to recall it`
   const room = ALERT_TEXT_LIMIT - status.length - hint.length - 4
   const body = record.message.length > room ? `${record.message.slice(0, room - 1)}…` : record.message
@@ -41,13 +50,11 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
     })
   }
 
-  const { message, once, senderId, userId, username } = record
+  const { audience, message, once, senderId } = record
 
   const isAuthor = update.from.id === senderId
-
-  const isRecipient = userId === undefined
-    ? username !== undefined && update.from.username?.toLowerCase() === username.toLowerCase()
-    : update.from.id === userId
+  const isListed = audience.targets.some((target) => isTarget(target, update.from))
+  const isRecipient = audience.kind === 'only' ? isListed : !isListed && !isAuthor
 
   if (!isAuthor && !isRecipient) {
     return update.answer({
@@ -68,7 +75,11 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
 
     await WhisperService.armRecall(material)
 
-    return update.answer({ show_alert: true, text: authorPanel(record) })
+    return update.answer({ show_alert: true, text: authorPanel(record, await WhisperService.readerCount(material)) })
+  }
+
+  if (once && await WhisperService.hasRead(material, update.from.id)) {
+    return update.answer({ show_alert: true, text: '🔥 you have already read this one-time whisper.' })
   }
 
   await update.answer({
@@ -76,14 +87,10 @@ export const handleCallbackQuery = async (update: CallbackQueryUpdate) => {
     text: message
   })
 
+  const readers = await WhisperService.markRead(material, update.from.id)
+
   // burning only after a delivered alert: doing it first would destroy a whisper telegram refused to show
-  if (once) {
-    if (await WhisperService.burnInline(material)) {
-      return update.edit(html`🔥 a one-time whisper to ${targetMention(record)} — read and burnt.`).catch(() => {})
-    }
-
-    return
+  if (once && audience.kind === 'only' && readers >= audience.targets.length && await WhisperService.burnInline(material)) {
+    return update.edit(html`🔥 a one-time whisper to ${audienceMention(audience)} — read and burnt.`).catch(() => {})
   }
-
-  await WhisperService.markRead(material)
 }

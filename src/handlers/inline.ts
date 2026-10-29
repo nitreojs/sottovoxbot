@@ -7,9 +7,29 @@ import { ButtonStyle, InlineKeyboard, InlineQueryResult, InputMessageContent } f
 import { ALERT_TEXT_LIMIT } from '../constants.js'
 import { BotService, UserService, WhisperService } from '../services/index.js'
 import { RedisMessage } from '../types.js'
-import { parseTargetedQuery, targetLabel, targetMention } from '../utils/index.js'
+import { audienceLabel, audienceMention, listLabel, parseAudienceQuery, targetLabel } from '../utils/index.js'
+
+interface ArticleOptions {
+  button: string
+  content: Formattable
+  description: string
+  saved: { lookup: string, material: string }
+  style?: ButtonStyle
+  title: string
+}
 
 const format = () => html`message format should be like this: <code>@${BotService.primary} @username message</code> or <code>@${BotService.primary} id:123456789 message</code>`
+
+const article = ({ button, content, description, saved, style, title }: ArticleOptions) =>
+  InlineQueryResult.article({
+    content: InputMessageContent.text(content),
+    description,
+    id: saved.lookup,
+    replyMarkup: InlineKeyboard.keyboard([
+      InlineKeyboard.textButton({ payload: saved.material, style, text: button })
+    ]),
+    title
+  })
 
 export const handleInlineQuery = async (update: InlineQueryUpdate) => {
   UserService.learn(update.from).catch(() => {})
@@ -36,27 +56,31 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
   const context = { senderId: update.from.id, senderUsername: update.from.username }
 
   if (!update.query) {
-    const recent = await WhisperService.lastTarget(context.senderId)
+    const recent = await WhisperService.lastAudience(context.senderId)
 
     return recent === undefined
       ? update.answer({ button, cache_time: 0, is_personal: true, results: [] })
-      : hint(`🔒 whisper to ${targetLabel(recent)}`, 'the last person you whispered — now type your message')
+      : hint(`${recent.kind === 'only' ? '🔒' : '🙈'} whisper to ${audienceLabel(recent)}`, 'who you whispered last — now type your message')
   }
 
-  const parsed = await parseTargetedQuery(update.query, context)
+  const parsed = await parseAudienceQuery(update.query, context)
 
-  const target = parsed?.target ?? await WhisperService.lastTarget(context.senderId)
+  if (parsed?.ok === false) {
+    return hint('⚠️ can not whisper like that', parsed.error)
+  }
 
-  if (target === undefined) {
+  const audience = parsed?.audience ?? await WhisperService.lastAudience(context.senderId)
+
+  if (audience === undefined) {
     return hint('whisper', 'name the recipient first: @username or id:123456789')
   }
 
   const sticky = parsed === undefined
   const message = parsed?.message ?? update.query.trim()
-  const recipientLabel = `${targetLabel(target)}${sticky ? ' (last)' : ''}`
+  const audienceTitle = `${audienceLabel(audience)}${sticky ? ' (last)' : ''}`
 
   if (!message) {
-    return hint(`🔒 whisper to ${recipientLabel}`, 'now type your message')
+    return hint(`${audience.kind === 'only' ? '🔒' : '🙈'} whisper to ${audienceTitle}`, 'now type your message')
   }
 
   if (message.length > ALERT_TEXT_LIMIT) {
@@ -67,24 +91,48 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
     )
   }
 
-  const recipientMention = targetMention(target)
-
-  const description = target.userId === undefined
-    ? `i have not seen @${target.username} yet, so i will match them by their @username.`
-    : sticky
-      ? 'the last person you whispered — name someone else to change that.'
-      : 'only they can open it.'
-
   const payload: RedisMessage = {
-    ...target,
+    audience,
     message,
     senderId: update.from.id
   }
 
+  if (audience.kind === 'except') {
+    const [saved] = await Promise.all([
+      WhisperService.saveInline(payload),
+      WhisperService.rememberAudience(context.senderId, audience)
+    ])
+
+    return update.answer({
+      button,
+      cache_time: 0,
+      is_personal: true,
+      results: [
+        article({
+          button: 'show message 🔐',
+          content: html`🙈 a whisper for everyone here except ${audience.targets.length === 1 ? 'one person' : `${audience.targets.length} people`}`,
+          description: 'anyone who taps it can read it, except them — and they will not be pinged.',
+          saved,
+          title: `🙈 whisper to ${audienceTitle}`
+        })
+      ]
+    })
+  }
+
+  const plural = audience.targets.length > 1
+  const unknown = audience.targets.filter((target) => target.userId === undefined)
+  const mention = audienceMention(audience)
+
+  const description = unknown.length > 0
+    ? `i have not seen ${listLabel(unknown.map(targetLabel))} yet, so i will match them by their @username.`
+    : sticky
+      ? `${plural ? 'the last people' : 'the last person'} you whispered — name someone else to change that.`
+      : 'only they can open it.'
+
   const [regular, once] = await Promise.all([
     WhisperService.saveInline(payload),
     WhisperService.saveInline({ ...payload, once: true }),
-    WhisperService.rememberTarget(context.senderId, target)
+    WhisperService.rememberAudience(context.senderId, audience)
   ])
 
   return update.answer({
@@ -92,30 +140,20 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
     cache_time: 0,
     is_personal: true,
     results: [
-      InlineQueryResult.article({
-        content: InputMessageContent.text(html`🔒 a whisper message to ${recipientMention}`),
+      article({
+        button: 'show message 🔐',
+        content: html`🔒 a whisper message to ${mention}`,
         description,
-        id: regular.lookup,
-        replyMarkup: InlineKeyboard.keyboard([
-          InlineKeyboard.textButton({
-            payload: regular.material,
-            text: 'show message 🔐'
-          })
-        ]),
-        title: `🔒 whisper to ${recipientLabel}`
+        saved: regular,
+        title: `🔒 whisper to ${audienceTitle}`
       }),
-      InlineQueryResult.article({
-        content: InputMessageContent.text(html`🔥 a one-time whisper to ${recipientMention}`),
-        description: `${description} it burns once they read it.`,
-        id: once.lookup,
-        replyMarkup: InlineKeyboard.keyboard([
-          InlineKeyboard.textButton({
-            payload: once.material,
-            style: ButtonStyle.Danger,
-            text: 'read once 🔥'
-          })
-        ]),
-        title: `🔥 one-time whisper to ${recipientLabel}`
+      article({
+        button: 'read once 🔥',
+        content: html`🔥 a one-time whisper to ${mention}`,
+        description: `${description} ${plural ? 'each of them can read it once; it burns after the last one does.' : 'it burns once they read it.'}`,
+        saved: once,
+        style: ButtonStyle.Danger,
+        title: `🔥 one-time whisper to ${audienceTitle}`
       })
     ]
   })

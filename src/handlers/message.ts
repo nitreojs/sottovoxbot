@@ -22,7 +22,7 @@ export const handleMessage = async (update: MessageUpdate) => {
       const mention = match.groups?.mention
 
       if (mention === undefined || BotService.owns(mention)) {
-        return handleWhisperCommand(update, match.groups?.rest?.trim())
+        return handleWhisperCommand(update)
       }
     }
   }
