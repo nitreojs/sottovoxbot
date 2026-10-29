@@ -110,7 +110,7 @@ export const handleInlineQuery = async (update: InlineQueryUpdate) => {
       results: [
         article({
           button: 'show message 🔐',
-          content: html`🙈 a whisper for everyone here except ${audience.targets.length === 1 ? 'one person' : `${audience.targets.length} people`}`,
+          content: html`🙈 a whisper for everyone here except ${audience.targets.map((target) => target.username ?? `user ${target.userId}`).join(', ')}`,
           description: 'anyone who taps it can read it, except them — and they will not be pinged.',
           saved,
           title: `🙈 whisper to ${audienceTitle}`
